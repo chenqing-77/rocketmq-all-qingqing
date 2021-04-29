@@ -84,18 +84,21 @@ public class Validators {
             throw new MQClientException(ResponseCode.MESSAGE_ILLEGAL, "the message is null");
         }
         // topic
+        //检查topic
         Validators.checkTopic(msg.getTopic());
+        //校验是否是不能使用的topic
         Validators.isNotAllowedSendTopic(msg.getTopic());
 
         // body
+        //消息体不能为空
         if (null == msg.getBody()) {
             throw new MQClientException(ResponseCode.MESSAGE_ILLEGAL, "the message body is null");
         }
-
+        //消息长度要大于0
         if (0 == msg.getBody().length) {
             throw new MQClientException(ResponseCode.MESSAGE_ILLEGAL, "the message body length is zero");
         }
-
+        //检查消息体是否大于最大允许大小4M
         if (msg.getBody().length > defaultMQProducer.getMaxMessageSize()) {
             throw new MQClientException(ResponseCode.MESSAGE_ILLEGAL,
                 "the message body size over max value, MAX: " + defaultMQProducer.getMaxMessageSize());
@@ -103,6 +106,9 @@ public class Validators {
     }
 
     public static void checkTopic(String topic) throws MQClientException {
+        //检查topic是否合法，不能为空，并进行正则校验
+        //长度小于127
+
         if (UtilAll.isBlank(topic)) {
             throw new MQClientException("The specified topic is blank", null);
         }

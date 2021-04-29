@@ -553,21 +553,28 @@ public class DefaultMQProducerImpl implements MQProducerInner {
         final SendCallback sendCallback,
         final long timeout
     ) throws MQClientException, RemotingException, MQBrokerException, InterruptedException {
+        //1、检查product 是否处于运行状态
         this.makeSureStateOK();
+        //2、检查消息 （topic,消息体）
         Validators.checkMessage(msg, this.defaultMQProducer);
+        // 调用编号；用于下面打印日志，标记为同一次发送消息
         final long invokeID = random.nextLong();
         long beginTimestampFirst = System.currentTimeMillis();
         long beginTimestampPrev = beginTimestampFirst;
         long endTimestamp = beginTimestampFirst;
+        // 获取 Topic路由信息
         TopicPublishInfo topicPublishInfo = this.tryToFindTopicPublishInfo(msg.getTopic());
         if (topicPublishInfo != null && topicPublishInfo.ok()) {
             boolean callTimeout = false;
             MessageQueue mq = null;
             Exception exception = null;
-            SendResult sendResult = null;
+            SendResult sendResult = null; // 最后一次发送结果
+            // timesTotal 发送总次数 如果是同步的话 消息发送次数可以是消息失败最大重试次数
             int timesTotal = communicationMode == CommunicationMode.SYNC ? 1 + this.defaultMQProducer.getRetryTimesWhenSendFailed() : 1;
             int times = 0;
+            // 存储每次发送消息选择的broker
             String[] brokersSent = new String[timesTotal];
+            // 循环调用发送消息，直到成功
             for (; times < timesTotal; times++) {
                 // 如果有多个broker的情况下，这一次调用会跟上一次的broker不同
                 String lastBrokerName = null == mq ? null : mq.getBrokerName();
